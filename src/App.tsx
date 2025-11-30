@@ -27,26 +27,15 @@ export default function App() {
     message: 'edited successfully'
   }
   const [alert, setAlert] = useState(InitialAlert)
-  const [ToDoList, setToDoList] = useState([
+  const ToDoListInitialValue:any = [
     {
       id: 1,
       title: 'مراجعة الأصول الثلاثة',
       description: 'من الصبح إلى الظهر',
       status: 'current'
     },
-    {
-      id: 2,
-      title: 'مراجعة نواقض الإسلام',
-      description: 'من الصبح إلى الظهر',
-      status: 'current'
-    },
-    {
-      id: 3,
-      title: 'مراجعة القواعد الأربعة',
-      description: 'من الصبح إلى الظهر',
-      status: 'done'
-    },
-  ])
+  ]
+  const [ToDoList, setToDoList] = useState(ToDoListInitialValue)
 
   const handleSectionChoose = (section: string) => {
     setCurrentSection(section)
@@ -115,7 +104,7 @@ export default function App() {
   });
 
   const handleAddToDo = () => {
-    const nextId = ToDoList[ToDoList.length - 1].id + 1
+    const nextId = crypto.randomUUID()
     if (addValue == '') {handleShowAlert({type: 'warning' , message: 'لا تستطيع إضافة مهمة فارغة'}); return}
     const newToDo = {
       id: nextId,
@@ -125,9 +114,13 @@ export default function App() {
     }
     setToDoList([...ToDoList , newToDo])
     setAddValue('')
+    handleShowAlert({
+      message:'تمت إضافة المهمة بنجاح',
+      type: 'success'
+    })
   }
-  const handleDone = (id:number) => {
-    setToDoList(list => 
+  const handleDone = (id:any) => {
+    setToDoList((list:any) => 
       list.map((todo:any) => 
         todo.id === id? { ...todo, status: "done" } : todo
       )
@@ -140,7 +133,6 @@ export default function App() {
   }
   
   const handleEdit = (data: any) => {
-    console.log(data)
     if (!data.isEdited){
       setEditing({data: {} , isEditing: false})
       return
@@ -153,7 +145,7 @@ export default function App() {
       return
     }
     setEditing({data: {} , isEditing: false})
-    setToDoList(list => 
+    setToDoList((list:any) => 
       list.map((todo:any) => 
         todo.id === data.data.id? data.data : todo
   ))
@@ -173,7 +165,7 @@ export default function App() {
   }
   
   const handleUndo = (id:number) => {
-     setToDoList(list => 
+     setToDoList((list:any) => 
       list.map((todo:any) => 
         todo.id === id? { ...todo, status: "current" } : todo
       )
@@ -202,7 +194,7 @@ export default function App() {
   }
 
   const loadList = () => {
-    return ToDoList.filter((todo) => currentSection == 'all' || currentSection == todo.status).map((todo) => <ToDoCard key={todo.id} data={todo} handleDone={handleDone} handleEdit={handleOpenPopUp} handleDelete={handleDelete} handleUndo={handleUndo}/>)
+    return ToDoList.filter((todo:any) => currentSection == 'all' || currentSection == todo.status).map((todo:any) => <ToDoCard key={todo.id} data={todo} handleDone={handleDone} handleEdit={handleOpenPopUp} handleDelete={handleDelete} handleUndo={handleUndo}/>)
   }
 
   return (
