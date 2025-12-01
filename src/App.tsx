@@ -21,27 +21,21 @@ export default function App() {
   const [currentSection, setCurrentSection] = useState('current');
   const [addValue, setAddValue] = useState('');
   const [editing, setEditing] = useState({ data: {}, isEditing: false });
+
   const InitialAlert: any = {
     isShown: false,
     type: 'success',
     message: 'edited successfully',
   };
   const [alert, setAlert] = useState(InitialAlert);
+
   const [ToDoList, setToDoList] = useState(() => {
     const saved = localStorage.getItem('ToDoList');
     return saved ? JSON.parse(saved) : [];
   });
 
   useEffect(() => {
-    const handleSaveBeforeClose = () => {
-      localStorage.setItem('ToDoList', JSON.stringify(ToDoList));
-    };
-
-    window.addEventListener('beforeunload', handleSaveBeforeClose);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleSaveBeforeClose);
-    };
+    localStorage.setItem('ToDoList', JSON.stringify(ToDoList));
   }, [ToDoList]);
 
   const handleSectionChoose = (section: string) => {
@@ -51,9 +45,10 @@ export default function App() {
   const styles: { [key: string]: CSSProperties } = {
     body: {
       width: '100%',
-      height: '100vh',
+      minHeight: '100vh',
       backgroundColor: colors.primary,
       paddingTop: '10vh',
+      paddingBottom: '10vh',
     },
     container: {
       background: colors.white,
@@ -77,12 +72,14 @@ export default function App() {
       flexDirection: 'column',
       direction: 'ltr',
       gap: 12,
+      marginTop: 12,
     },
     title: {
       fontSize: 42,
     },
     separator: {
       backgroundColor: colors.divider,
+      marginTop: 8,
       marginBottom: 8,
     },
     addToDo: {
@@ -91,6 +88,7 @@ export default function App() {
       direction: 'rtl',
       gap: 12,
       marginTop: 12,
+      marginBottom: 12,
     },
     alert: {
       width: '40%',
@@ -112,7 +110,7 @@ export default function App() {
 
   const handleAddToDo = () => {
     const nextId = crypto.randomUUID();
-    if (addValue == '') {
+    if (addValue === '') {
       handleShowAlert({
         type: 'warning',
         message: 'لا تستطيع إضافة مهمة فارغة',
@@ -132,17 +130,17 @@ export default function App() {
       type: 'success',
     });
   };
+
   const handleDone = (id: any) => {
     setToDoList((list: any) =>
       list.map((todo: any) =>
         todo.id === id ? { ...todo, status: 'done' } : todo
       )
     );
-    let aalert = {
+    handleShowAlert({
       message: 'لقد تم الإضافة إلى قائمة الإنجازات بنجاح',
       type: 'success',
-    };
-    handleShowAlert(aalert);
+    });
   };
 
   const handleEdit = (data: any) => {
@@ -150,7 +148,7 @@ export default function App() {
       setEditing({ data: {}, isEditing: false });
       return;
     }
-    if (data.data.title == '') {
+    if (data.data.title === '') {
       handleShowAlert({
         type: 'error',
         message: 'لا يمكن وضع عنوان فارغ',
@@ -166,37 +164,31 @@ export default function App() {
       message: 'تم التعديل بنجاح',
     });
   };
-  const handleDelete = (id: number) => {
-    setToDoList([...ToDoList].filter((todo) => todo.id != id));
-    let aalert = {
+
+  const handleDelete = (id: any) => {
+    setToDoList([...ToDoList].filter((todo) => todo.id !== id));
+    handleShowAlert({
       message: 'لقد تم المسح بنجاح',
       type: 'success',
-    };
-    handleShowAlert(aalert);
+    });
   };
 
-  const handleUndo = (id: number) => {
+  const handleUndo = (id: any) => {
     setToDoList((list: any) =>
       list.map((todo: any) =>
         todo.id === id ? { ...todo, status: 'current' } : todo
       )
     );
-    let aalert = {
+    handleShowAlert({
       message: 'لقد تم الإرجاع بنجاح',
       type: 'success',
-    };
-    handleShowAlert(aalert);
+    });
   };
 
   const handleShowAlert = (data: any) => {
-    let emptyAlert = {
-      message: '',
-      type: '',
-      isShown: false,
-    };
     setAlert({ ...data, isShown: true });
     setTimeout(() => {
-      setAlert(emptyAlert);
+      setAlert(InitialAlert);
     }, 3000);
   };
 
@@ -204,9 +196,9 @@ export default function App() {
     setEditing({ data: data, isEditing: true });
   };
 
-  const loadList = () => {
-    return ToDoList.filter(
-      (todo: any) => currentSection == 'all' || currentSection == todo.status
+  const loadList = () =>
+    ToDoList.filter(
+      (todo: any) => currentSection === 'all' || currentSection === todo.status
     ).map((todo: any) => (
       <ToDoCard
         key={todo.id}
@@ -217,62 +209,60 @@ export default function App() {
         handleUndo={handleUndo}
       />
     ));
-  };
 
   return (
     <div style={styles.body}>
       <Container maxWidth="sm" style={styles.container}>
-        <Stack spacing={1} style={styles.wrapper}>
-          <div style={styles.headingContainer}>
-            <h1 style={styles.title}>قائمة المهام</h1>
+        <div style={styles.headingContainer}>
+          <h1 style={styles.title}>قائمة المهام</h1>
 
-            <ButtonGroup variant="outlined" aria-label="section selector">
-              <Button
-                onClick={() => handleSectionChoose('current')}
-                sx={getButtonStyles('current')}
-              >
-                قيد الإنجاز
-              </Button>
-
-              <Button
-                onClick={() => handleSectionChoose('done')}
-                sx={getButtonStyles('done')}
-              >
-                تم الإنجاز
-              </Button>
-
-              <Button
-                onClick={() => handleSectionChoose('all')}
-                sx={getButtonStyles('all')}
-              >
-                الكل
-              </Button>
-            </ButtonGroup>
-          </div>
-
-          <hr style={styles.separator} />
-
-          {loadList()}
-
-          <hr style={styles.separator} />
-
-          <h3>أدخل إسم المهمة</h3>
-          <div style={styles.addToDo}>
-            <TextField
-              fullWidth
-              value={addValue}
-              onChange={(e) => setAddValue(e.target.value)}
-            />
+          <ButtonGroup>
             <Button
-              variant="contained"
-              style={{ width: 64, background: colors.secondary }}
-              onClick={handleAddToDo}
+              onClick={() => handleSectionChoose('current')}
+              sx={getButtonStyles('current')}
             >
-              إضافة
+              قيد الإنجاز
             </Button>
-          </div>
+
+            <Button
+              onClick={() => handleSectionChoose('done')}
+              sx={getButtonStyles('done')}
+            >
+              تم الإنجاز
+            </Button>
+
+            <Button
+              onClick={() => handleSectionChoose('all')}
+              sx={getButtonStyles('all')}
+            >
+              الكل
+            </Button>
+          </ButtonGroup>
+        </div>
+        {/* <hr style={styles.separator} /> */}
+        <h3>أدخل إسم المهمة</h3>
+
+        <div style={styles.addToDo}>
+          <TextField
+            fullWidth
+            value={addValue}
+            onChange={(e) => setAddValue(e.target.value)}
+          />
+          <Button
+            variant="contained"
+            style={{ width: 64, background: colors.secondary }}
+            onClick={handleAddToDo}
+          >
+            إضافة
+          </Button>
+        </div>
+        {/* <hr style={styles.separator} /> */}
+
+        <Stack spacing={1} className="wrapper" style={styles.wrapper}>
+          {loadList()}
         </Stack>
       </Container>
+
       <Alert
         variant="filled"
         severity={alert.type}
@@ -280,6 +270,7 @@ export default function App() {
       >
         {alert.message}
       </Alert>
+
       <PopUp editing={editing} handleEdit={handleEdit} />
     </div>
   );
