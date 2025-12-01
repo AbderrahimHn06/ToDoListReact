@@ -1,11 +1,11 @@
-import { useContext, useState } from 'react'
-import type { CSSProperties } from 'react'
+import { useContext, useState, useEffect } from 'react';
+import type { CSSProperties } from 'react';
 
 // Contexts
 import { Colors } from './ThemeProvider';
 
 // Custom Components
-import ToDoCard from './Components/ToDoCard'
+import ToDoCard from './Components/ToDoCard';
 import PopUp from './Components/PopUp';
 
 // MUI
@@ -18,49 +18,56 @@ import Alert from '@mui/material/Alert';
 
 export default function App() {
   const colors = useContext(Colors);
-  const [currentSection, setCurrentSection] = useState('current')
-  const [addValue, setAddValue] = useState('')
-  const [editing , setEditing] = useState({data: {} , isEditing: false})
+  const [currentSection, setCurrentSection] = useState('current');
+  const [addValue, setAddValue] = useState('');
+  const [editing, setEditing] = useState({ data: {}, isEditing: false });
   const InitialAlert: any = {
     isShown: false,
     type: 'success',
-    message: 'edited successfully'
-  }
-  const [alert, setAlert] = useState(InitialAlert)
-  const ToDoListInitialValue:any = [
-    {
-      id: 1,
-      title: 'مراجعة الأصول الثلاثة',
-      description: 'من الصبح إلى الظهر',
-      status: 'current'
-    },
-  ]
-  const [ToDoList, setToDoList] = useState(ToDoListInitialValue)
+    message: 'edited successfully',
+  };
+  const [alert, setAlert] = useState(InitialAlert);
+  const [ToDoList, setToDoList] = useState(() => {
+    const saved = localStorage.getItem('ToDoList');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  useEffect(() => {
+    const handleSaveBeforeClose = () => {
+      localStorage.setItem('ToDoList', JSON.stringify(ToDoList));
+    };
+
+    window.addEventListener('beforeunload', handleSaveBeforeClose);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleSaveBeforeClose);
+    };
+  }, [ToDoList]);
 
   const handleSectionChoose = (section: string) => {
-    setCurrentSection(section)
-  }
+    setCurrentSection(section);
+  };
 
   const styles: { [key: string]: CSSProperties } = {
     body: {
       width: '100%',
       height: '100vh',
       backgroundColor: colors.primary,
-      paddingTop: '10vh'
+      paddingTop: '10vh',
     },
     container: {
       background: colors.white,
       borderRadius: 16,
-      boxShadow: "0 0 14px 2px rgba(200, 202, 255, 0.4)",
+      boxShadow: '0 0 14px 2px rgba(200, 202, 255, 0.4)',
       border: '1px solid ' + colors.divider,
       minHeight: '20vh',
-      direction: 'rtl'
+      direction: 'rtl',
     },
     wrapper: {
       display: 'flex',
       justifyContent: 'center',
       paddingTop: 16,
-      paddingBottom: 16
+      paddingBottom: 16,
     },
     headingContainer: {
       width: '100%',
@@ -69,10 +76,10 @@ export default function App() {
       alignItems: 'center',
       flexDirection: 'column',
       direction: 'ltr',
-      gap: 12
+      gap: 12,
     },
     title: {
-      fontSize: 42
+      fontSize: 42,
     },
     separator: {
       backgroundColor: colors.divider,
@@ -83,125 +90,139 @@ export default function App() {
       justifyContent: 'space-between',
       direction: 'rtl',
       gap: 12,
-      marginTop: 12
+      marginTop: 12,
     },
     alert: {
       width: '40%',
       position: 'fixed',
       bottom: 32,
       left: 16,
-      zIndex: 99999
-    }
-  }
+      zIndex: 99999,
+    },
+  };
 
   const getButtonStyles = (section: string) => ({
     bgcolor: currentSection === section ? colors.primary : 'transparent',
     color: currentSection === section ? colors.white : 'black',
     borderColor: colors.primary,
-    "&:hover": {
-      bgcolor: currentSection === section ? colors.primary : 'rgba(0,0,0,0.04)'
-    }
+    '&:hover': {
+      bgcolor: currentSection === section ? colors.primary : 'rgba(0,0,0,0.04)',
+    },
   });
 
   const handleAddToDo = () => {
-    const nextId = crypto.randomUUID()
-    if (addValue == '') {handleShowAlert({type: 'warning' , message: 'لا تستطيع إضافة مهمة فارغة'}); return}
+    const nextId = crypto.randomUUID();
+    if (addValue == '') {
+      handleShowAlert({
+        type: 'warning',
+        message: 'لا تستطيع إضافة مهمة فارغة',
+      });
+      return;
+    }
     const newToDo = {
       id: nextId,
       title: addValue,
       description: 'لا توجد معلومات عن المهمة',
-      status: 'current'
-    }
-    setToDoList([...ToDoList , newToDo])
-    setAddValue('')
+      status: 'current',
+    };
+    setToDoList([...ToDoList, newToDo]);
+    setAddValue('');
     handleShowAlert({
-      message:'تمت إضافة المهمة بنجاح',
-      type: 'success'
-    })
-  }
-  const handleDone = (id:any) => {
-    setToDoList((list:any) => 
-      list.map((todo:any) => 
-        todo.id === id? { ...todo, status: "done" } : todo
+      message: 'تمت إضافة المهمة بنجاح',
+      type: 'success',
+    });
+  };
+  const handleDone = (id: any) => {
+    setToDoList((list: any) =>
+      list.map((todo: any) =>
+        todo.id === id ? { ...todo, status: 'done' } : todo
       )
-    )
+    );
     let aalert = {
       message: 'لقد تم الإضافة إلى قائمة الإنجازات بنجاح',
-      type: 'success'
-    }
-    handleShowAlert(aalert)
-  }
-  
+      type: 'success',
+    };
+    handleShowAlert(aalert);
+  };
+
   const handleEdit = (data: any) => {
-    if (!data.isEdited){
-      setEditing({data: {} , isEditing: false})
-      return
+    if (!data.isEdited) {
+      setEditing({ data: {}, isEditing: false });
+      return;
     }
-    if (data.data.title == ''){
+    if (data.data.title == '') {
       handleShowAlert({
         type: 'error',
-        message: 'لا يمكن وضع عنوان فارغ'
-      })
-      return
+        message: 'لا يمكن وضع عنوان فارغ',
+      });
+      return;
     }
-    setEditing({data: {} , isEditing: false})
-    setToDoList((list:any) => 
-      list.map((todo:any) => 
-        todo.id === data.data.id? data.data : todo
-  ))
+    setEditing({ data: {}, isEditing: false });
+    setToDoList((list: any) =>
+      list.map((todo: any) => (todo.id === data.data.id ? data.data : todo))
+    );
     handleShowAlert({
-        type: 'success',
-        message: "تم التعديل بنجاح"
-      })
-
-  }
-  const handleDelete = (id:number) => {
-    setToDoList([...ToDoList].filter(todo => todo.id != id))
+      type: 'success',
+      message: 'تم التعديل بنجاح',
+    });
+  };
+  const handleDelete = (id: number) => {
+    setToDoList([...ToDoList].filter((todo) => todo.id != id));
     let aalert = {
       message: 'لقد تم المسح بنجاح',
-      type: 'success'
-    }
-    handleShowAlert(aalert)
-  }
-  
-  const handleUndo = (id:number) => {
-     setToDoList((list:any) => 
-      list.map((todo:any) => 
-        todo.id === id? { ...todo, status: "current" } : todo
+      type: 'success',
+    };
+    handleShowAlert(aalert);
+  };
+
+  const handleUndo = (id: number) => {
+    setToDoList((list: any) =>
+      list.map((todo: any) =>
+        todo.id === id ? { ...todo, status: 'current' } : todo
       )
-    )
+    );
     let aalert = {
       message: 'لقد تم الإرجاع بنجاح',
-      type: 'success'
-    }
-    handleShowAlert(aalert)
-  }
+      type: 'success',
+    };
+    handleShowAlert(aalert);
+  };
 
   const handleShowAlert = (data: any) => {
     let emptyAlert = {
       message: '',
       type: '',
-      isShown: false
-    }
-    setAlert({...data , isShown: true})
+      isShown: false,
+    };
+    setAlert({ ...data, isShown: true });
     setTimeout(() => {
-      setAlert(emptyAlert)
+      setAlert(emptyAlert);
     }, 3000);
-  }
+  };
 
-  const handleOpenPopUp = (data:any) => {
-    setEditing({data: data , isEditing: true})
-  }
+  const handleOpenPopUp = (data: any) => {
+    setEditing({ data: data, isEditing: true });
+  };
 
   const loadList = () => {
-    return ToDoList.filter((todo:any) => currentSection == 'all' || currentSection == todo.status).map((todo:any) => <ToDoCard key={todo.id} data={todo} handleDone={handleDone} handleEdit={handleOpenPopUp} handleDelete={handleDelete} handleUndo={handleUndo}/>)
-  }
+    return ToDoList.filter(
+      (todo: any) => currentSection == 'all' || currentSection == todo.status
+    ).map((todo: any) => (
+      <ToDoCard
+        key={todo.id}
+        data={todo}
+        handleDone={handleDone}
+        handleEdit={handleOpenPopUp}
+        handleDelete={handleDelete}
+        handleUndo={handleUndo}
+      />
+    ));
+  };
 
   return (
     <div style={styles.body}>
-      <Container maxWidth='sm' style={styles.container}>
+      <Container maxWidth="sm" style={styles.container}>
         <Stack spacing={1} style={styles.wrapper}>
-
           <div style={styles.headingContainer}>
             <h1 style={styles.title}>قائمة المهام</h1>
 
@@ -243,18 +264,23 @@ export default function App() {
               onChange={(e) => setAddValue(e.target.value)}
             />
             <Button
-              variant='contained'
+              variant="contained"
               style={{ width: 64, background: colors.secondary }}
               onClick={handleAddToDo}
             >
               إضافة
             </Button>
           </div>
-
         </Stack>
       </Container>
-      <Alert variant='filled' severity={alert.type} style={ alert.isShown? styles.alert : {display: 'none'}}>{alert.message}</Alert>
-      <PopUp editing={editing} handleEdit={handleEdit}/>
+      <Alert
+        variant="filled"
+        severity={alert.type}
+        style={alert.isShown ? styles.alert : { display: 'none' }}
+      >
+        {alert.message}
+      </Alert>
+      <PopUp editing={editing} handleEdit={handleEdit} />
     </div>
   );
 }
